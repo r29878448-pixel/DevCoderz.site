@@ -3,90 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Lecture Player</title>
-    <link rel="stylesheet" href="https://gray-madelina-19.tiiny.site/ogx.css">
-    <link rel="stylesheet" href="https://gray-madelina-19.tiiny.site/plyrx55.css">
+    <title>Test Player</title>
     <style>
-        body { 
-            margin: 0; 
-            background: #000; 
-        } 
-        .video-container { 
-            width: 100%; 
-            height: 100vh;
-            position: relative; 
-        }
-        video {
-            width: 100%;
-            height: 100%;
-        }
+        body { margin: 0; background: #000; }
+        video { width: 100%; height: 100vh; }
     </style>
 </head>
 <body>
 
-<div class="video-container">
-    <video id="lecture-player" playsinline controls></video>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
-<script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+<video id="player" controls autoplay></video>
 
 <script>
 (async function() {
     try {
         const params = new URLSearchParams(window.location.search);
         const videoId = params.get('video_id');
-        const batchId = params.get('batch_id');
-        const subjectId = params.get('subject_id');
-        const lectureName = params.get('name') || "Lecture";
-
-        // Validation
-        if (!videoId || !batchId || !subjectId) {
-            document.body.innerHTML = '<p style="color:red; padding:20px;">Error: Missing parameters</p>';
-            return;
-        }
-
-        // 1. API se data fetch karo
-        const response = await fetch(`https://devcoderz-player.vercel.app/api/stream.js?video_id=${videoId}&batch_id=${batchId}&subject_id=${subjectId}`);
         
-        if (!response.ok) {
-            throw new Error('Failed to fetch video data');
-        }
+        console.log('Video ID:', videoId);
+        console.log('URL Params:', params.toString());
 
-        const data = await response.json();
-
-        const manifestUrl = data.manifest; // API se aane wala MPD link
-        const keyId = data.kid;
-        const keyValue = data.k;
-
-        if (!manifestUrl || !keyId || !keyValue) {
-            throw new Error('Invalid video data from API');
-        }
-
-        const videoEl = document.getElementById('lecture-player');
-        const shakaPlayer = new shaka.Player(videoEl);
-
-        // DRM configuration
-        shakaPlayer.configure({ 
-            drm: { 
-                clearKeys: { 
-                    [keyId]: keyValue 
-                } 
-            } 
-        });
-
-        // Manifest load karo
-        await shakaPlayer.load(manifestUrl);
-
-        // Plyr player initialize karo
-        new Plyr(videoEl, { 
-            autoplay: true,
-            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen']
-        });
+        // Test karo - hardcoded URL se
+        const testUrl = 'https://commondatastorage.googleapis.com/gtv-videos-library/sample/BigBuckBunny.mp4';
+        
+        document.getElementById('player').src = testUrl;
+        console.log('Video loaded');
 
     } catch (error) {
         console.error('Error:', error);
-        document.body.innerHTML = `<p style="color:red; padding:20px;">Error: ${error.message}</p>`;
+        alert('Error: ' + error.message);
     }
 })();
 </script>
