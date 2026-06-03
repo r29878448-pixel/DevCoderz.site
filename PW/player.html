@@ -4,14 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Lecture Player</title>
-    <link rel="stylesheet" href="https://gray-madelina-19.tiiny.site/ogx.css">
-    <link rel="stylesheet" href="https://gray-madelina-19.tiiny.site/plyrx55.css">
-    <style>body { margin:0; background:#000; } .video-container { width:100%; height:auto; position:relative; }</style>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <style>
+        body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; }
+        .video-container { width: 100%; max-width: 900px; margin: auto; }
+        video { width: 100%; }
+        h2 { color: white; text-align: center; font-family: sans-serif; }
+    </style>
 </head>
 <body>
 
 <div class="video-container">
-    <video id="lecture-player" playsinline autoplay></video>
+    <h2 id="lectureTitle">Loading Lecture...</h2>
+    <video id="lecture-player" playsinline controls></video>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
@@ -20,36 +25,48 @@
 <script>
 (async function() {
     const params = new URLSearchParams(window.location.search);
+    
+    // Parameters ko sahi se capture karein
     const videoId = params.get('video_id');
     const batchId = params.get('batch_id');
     const subjectId = params.get('subject_id');
     const lectureName = params.get('name') || "Lecture";
 
-    // 1. API se data fetch karo
-    const response = await fetch(`https://devcoderz-player.vercel.app/api/stream.js?video_id=${videoId}&batch_id=${batchId}&subject_id=${subjectId}`);
-    const data = await response.json();
+    // Lecture ka naam display karein
+    document.getElementById('lectureTitle').innerText = decodeURIComponent(lectureName);
 
-    const manifestUrl = data.manifest; // API se aane wala MPD link
-    const keyId = data.kid;
-    const keyValue = data.k;
+    try {
+        // API Call (BatchId, ChildId/videoId, SubjectId)
+        const response = await fetch(`https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`);
+        const data = await response.json();
 
-    const videoEl = document.getElementById('lecture-player');
-    const shakaPlayer = new shaka.Player(videoEl);
+        if (!data.success || !data.data || data.data.length === 0) {
+            throw new Error("Video URL not found");
+        }
 
-    shakaPlayer.configure({ drm: { clearKeys: { [keyId]: keyValue } } });
+        const manifestUrl = data.data[0].url;
+        const videoEl = document.getElementById('lecture-player');
+        const shakaPlayer = new shaka.Player(videoEl);
 
-    const manifestObj = new URL(manifestUrl);
-    shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
-        if (type !== shaka.net.NetworkingEngine.RequestType.SEGMENT) return;
-        manifestObj.searchParams.forEach((v, k) => {
-            const segUrl = new URL(request.uris[0]);
-            segUrl.searchParams.set(k, v);
-            request.uris[0] = segUrl.toString();
+        // Network Request Filter (PW ke signed URLs ke liye zaruri)
+        shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
+            if (type !== shaka.net.NetworkingEngine.RequestType.SEGMENT) return;
+            const manifestObj = new URL(manifestUrl);
+            manifestObj.searchParams.forEach((v, k) => {
+                const segUrl = new URL(request.uris[0]);
+                segUrl.searchParams.set(k, v);
+                request.uris[0] = segUrl.toString();
+            });
         });
-    });
 
-    await shakaPlayer.load(manifestUrl);
-    new Plyr(videoEl, { autoplay: true });
+        // Load Content
+        await shakaPlayer.load(manifestUrl);
+        new Plyr(videoEl, { autoplay: true });
+
+    } catch (err) {
+        console.error("Player Error:", err);
+        document.getElementById('lectureTitle').innerText = "Failed to load video.";
+    }
 })();
 </script>
 </body>
