@@ -3,7 +3,7 @@ export default async function handler(req, res) {
 
     try {
         // 1. Pehle manifest URL fetch karo
-        const videoApiUrl = `https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batch_id}&childId=${video_id}&subjectId=${subject_id}`;
+        const videoApiUrl = `
         const vRes = await fetch(videoApiUrl);
         const vData = await vRes.json();
         
