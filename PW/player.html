@@ -1,28 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Auto-Play DASH</title>
+    <title>Auto-Play Player</title>
     <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
-    <style>body{margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh} video{width:100%;max-width:900px}</style>
+    <style>
+        body { margin:0; background:#000; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; }
+        .video-container { width:100%; max-width:900px; }
+        video { width:100%; }
+        .btn { display:block; margin-top:15px; color:#fff; text-decoration:none; padding:10px; background:#4f46e5; border-radius:5px; text-align:center; }
+    </style>
 </head>
 <body>
-    <video id="video" controls playsinline></video>
+    <div class="video-container">
+        <video id="video" controls playsinline></video>
+        <a id="attachment-link" class="btn" style="display:none;" target="_blank">Download Notes</a>
+    </div>
     <script>
         (async function() {
             const params = new URLSearchParams(window.location.search);
-            const vId = params.get('video_id'), bId = params.get('batch_id'), sId = params.get('subject_id');
+            const vId = params.get('video_id'), bId = params.get('batch_id'), sId = params.get('subject_id'), kid = params.get('kid');
             const video = document.getElementById('video');
             const player = new shaka.Player(video);
 
             try {
-                // 1. Fetch Manifest URL
-                const res = await fetch(`/api/proxy?endpoint=video-url-details&batchId=${bId}&childId=${vId}&subjectId=${sId}`);
-                const vidRes = await res.json();
+                // Teeno APIs call kar rahe hain
+                const [otpRes, vidRes, attRes] = await Promise.all([
+                    fetch(`/api/proxy?endpoint=otp&kid=${kid}`).then(r => r.json()),
+                    fetch(`/api/proxy?endpoint=video-url-details&batchId=${bId}&childId=${vId}&subjectId=${sId}`).then(r => r.json()),
+                    fetch(`/api/proxy?endpoint=attachments-url&BatchId=${bId}&SubjectId=${sId}&ContentId=${vId}`).then(r => r.json())
+                ]);
+
+                // 1. Attachments handle karein
+                if (attRes.success && attRes.data?.length > 0) {
+                    const attLink = document.getElementById('attachment-link');
+                    attLink.href = attRes.data[0].url;
+                    attLink.style.display = 'block';
+                }
+
+                // 2. Video Manifest URL
                 const manifestUrl = vidRes.data[0].url;
 
-                // 2. Segment Filter: Har segment mein parameters inject karega
+                // 3. Segment Parameter Injection
                 player.getNetworkingEngine().registerRequestFilter((type, request) => {
                     request.headers["Referer"] = "https://www.pw.live/";
                     if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
@@ -33,11 +53,11 @@
                     }
                 });
 
-                // 3. Load & Play
+                // 4. Load
                 await player.load(manifestUrl);
                 new Plyr(video);
             } catch (e) { 
-                console.error("Auto-fetch error:", e); 
+                console.error("Setup Error:", e); 
             }
         })();
     </script>
