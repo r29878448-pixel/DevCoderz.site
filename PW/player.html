@@ -25,30 +25,17 @@
     const videoId = params.get('video_id');
     const batchId = params.get('batch_id');
     const subjectId = params.get('subject_id');
-    const topicSlug = params.get('topicSlug');
-    const subjectSlug = params.get('subjectSlug');
+    const topicSlug = params.get('topicSlug') || "default";
+    const subjectSlug = params.get('subjectSlug') || "default";
 
     try {
-        const [keyRes, vidRes, attRes] = await Promise.all([
-            fetch(`https://apiserver.deltastudy.site/api/pw/datacontent?batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=videos`).then(r => r.json()),
-            fetch(`https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`).then(r => r.json()),
-            fetch(`https://apiserver.deltastudy.site/api/pw/attachments-url?BatchId=${batchId}&SubjectId=${subjectId}&ContentId=${videoId}`).then(r => r.json())
-        ]);
-
-        const accessKey = keyRes.data;
-        const manifestUrl = vidRes.data[0].url;
+        const vidRes = await fetch(`https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`).then(r => r.json());
         
-        if (attRes.success && attRes.data.length > 0) {
-            const attLink = document.getElementById('attachment-link');
-            attLink.href = attRes.data[0].url;
-            attLink.style.display = 'block';
-        }
-
+        const manifestUrl = vidRes.data[0].url;
         const videoEl = document.getElementById('lecture-player');
         const shakaPlayer = new shaka.Player(videoEl);
 
         shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
-            request.headers["Authorization"] = accessKey;
             if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
                 const manifestObj = new URL(manifestUrl);
                 const segUrl = new URL(request.uris[0]);
@@ -63,6 +50,7 @@
             settings: ['quality', 'speed']
         });
     } catch (err) {
+        alert("Player Error: Data fetch fail hua. Check Console.");
         console.error(err);
     }
 })();
