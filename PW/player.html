@@ -16,20 +16,16 @@
     const vId = params.get('video_id'), bId = params.get('batch_id'), sId = params.get('subject_id');
 
     try {
-        // 1. Fetch Video URL
         const vidRes = await fetch(`/api/proxy?endpoint=video-url-details&batchId=${bId}&childId=${vId}&subjectId=${sId}`).then(r => r.json());
         const manifestUrl = vidRes.data[0].url;
-
-        // 2. Fetch Key (Agar slug nahi hai toh khali chhod de)
-        const keyRes = await fetch(`/api/proxy?endpoint=datacontent&batchId=${bId}&subjectSlug=none&topicSlug=none&contentType=videos`).then(r => r.json());
-        const accessKey = keyRes.data || "";
 
         const videoEl = document.getElementById('player');
         const player = new shaka.Player(videoEl);
 
         player.getNetworkingEngine().registerRequestFilter((type, request) => {
-            if(accessKey) request.headers["Authorization"] = accessKey;
+            // Referer zaroori hai
             request.headers["Referer"] = "https://www.pw.live/";
+            
             if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
                 const mUrl = new URL(manifestUrl);
                 const sUrl = new URL(request.uris[0]);
@@ -40,7 +36,10 @@
 
         await player.load(manifestUrl);
         new Plyr(videoEl);
-    } catch (e) { console.error("Critical Error:", e); }
+    } catch (e) { 
+        console.error("Error:", e); 
+        alert("Video Load Error: Check Console");
+    }
 })();
 </script>
 </body>
