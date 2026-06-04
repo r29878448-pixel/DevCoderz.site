@@ -39,7 +39,7 @@
         const accessKey = keyRes.data;
         const manifestUrl = vidRes.data[0].url;
 
-        if (attRes.success && attRes.data.length > 0) {
+        if (attRes.success && attRes.data && attRes.data.length > 0) {
             const attLink = document.getElementById('attachment-link');
             attLink.href = attRes.data[0].url;
             attLink.style.display = 'block';
