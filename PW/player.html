@@ -26,9 +26,11 @@
     const subjectId = params.get('subject_id');
     const topicSlug = params.get('topicSlug');
     const subjectSlug = params.get('subjectSlug');
+    const kid = params.get('kid');
 
     try {
-        const [keyRes, vidRes, attRes] = await Promise.all([
+        const [otpRes, keyRes, vidRes, attRes] = await Promise.all([
+            fetch(`/api/proxy?endpoint=otp&kid=${kid}`).then(r => r.json()),
             fetch(`/api/proxy?endpoint=datacontent&batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=videos`).then(r => r.json()),
             fetch(`/api/proxy?endpoint=video-url-details&batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`).then(r => r.json()),
             fetch(`/api/proxy?endpoint=attachments-url&BatchId=${batchId}&SubjectId=${subjectId}&ContentId=${videoId}`).then(r => r.json())
