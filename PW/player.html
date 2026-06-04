@@ -2,50 +2,47 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure Lecture Player</title>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        body { margin:0; background:#000; height:100vh; display:flex; align-items:center; justify-content:center; }
-        .video-container { width:100%; max-width:900px; }
-        video { width:100%; }
+        body { margin: 0; background: #000; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .video-container { width: 100%; max-width: 900px; }
+        video { width: 100%; }
     </style>
 </head>
 <body>
-
 <div class="video-container">
     <video id="lecture-player" playsinline controls></video>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
 <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
-
 <script>
 (async function() {
     const params = new URLSearchParams(window.location.search);
     const videoId = params.get('video_id');
     const batchId = params.get('batch_id');
     const subjectId = params.get('subject_id');
+    const topicSlug = params.get('topicSlug');
+    const subjectSlug = params.get('subjectSlug');
 
     try {
-        const response = await fetch(`https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`);
-        const data = await response.json();
-        const manifestUrl = data.data[0].url;
+        const [keyRes, vidRes] = await Promise.all([
+            fetch(`https://apiserver.deltastudy.site/api/pw/datacontent?batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=videos`).then(r => r.json()),
+            fetch(`https://apiserver.deltastudy.site/api/pw/video-url-details?batchId=${batchId}&childId=${videoId}&subjectId=${subjectId}`).then(r => r.json())
+        ]);
 
+        const accessKey = keyRes.data;
+        const manifestUrl = vidRes.data[0].url;
         const videoEl = document.getElementById('lecture-player');
         const shakaPlayer = new shaka.Player(videoEl);
 
-        // PW Signed URL handling: 
-        // Manifest mein jo params hain, unhe har segment request mein append karna
         shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
+            request.headers["Authorization"] = accessKey;
             if (type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
                 const manifestObj = new URL(manifestUrl);
                 const segUrl = new URL(request.uris[0]);
-                
-                // Manifest ke signatures/params segment mein copy karna
-                manifestObj.searchParams.forEach((v, k) => {
-                    segUrl.searchParams.set(k, v);
-                });
-                
+                manifestObj.searchParams.forEach((v, k) => segUrl.searchParams.set(k, v));
                 request.uris[0] = segUrl.toString();
             }
         });
@@ -55,9 +52,8 @@
             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
             settings: ['quality', 'speed']
         });
-
     } catch (err) {
-        console.error("Player Error:", err);
+        console.error(err);
     }
 })();
 </script>
