@@ -1,62 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Secure Lecture Downloader</title>
+    <title>Delta Premium Player</title>
     <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
     <style>
-        body { background: #050505; color: #fff; font-family: sans-serif; margin: 0; }
-        .container { max-width: 800px; margin: auto; padding: 20px; }
-        #video { width: 100%; border-radius: 8px; background: #000; }
-        .controls { margin-top: 20px; padding: 20px; background: #1a1a1a; border-radius: 8px; }
-        .btn { background: #5a4bda; border: none; color: white; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
-        .log { margin-top: 15px; background: #000; padding: 10px; font-family: monospace; font-size: 12px; height: 100px; overflow-y: auto; color: #0f0; }
+        body { margin: 0; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        #video { width: 90%; max-width: 900px; }
+        #status { color: #00ff00; font-family: monospace; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <video id="video" controls></video>
-    
-    <div class="controls">
-        <h2 style="margin-top:0">Lecture Downloader</h2>
-        <button class="btn" onclick="startDownload()">Load & Download Segments</button>
-        <div id="log" class="log">--- System Ready ---</div>
-    </div>
-</div>
+    <video id="video" controls autoplay></video>
+    <div id="status">Initializing...</div>
 
-<script>
-    const video = document.getElementById('video');
-    const logEl = document.getElementById('log');
+    <script>
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const player = new shaka.Player(video);
 
-    function log(msg) { logEl.innerHTML += `<br>> ${msg}`; }
+        async function initPlayer() {
+            try {
+                // 1. API - Video Details (Manifest URL)
+                status.innerText = "Connecting to Server...";
+                const vidRes = await fetch('/api/proxy?endpoint=video-url-details').then(r => r.json());
+                const manifestUrl = vidRes.data[0].url;
 
-    async function startDownload() {
-        log("Fetching video details...");
-        try {
-            // 1. Fetching API Data
-            const vidRes = await fetch('/api/proxy?endpoint=video-url-details').then(r => r.json());
-            const keyRes = await fetch('/api/proxy?endpoint=datacontent').then(r => r.json());
-            
-            const manifestUrl = vidRes.data[0].url;
-            const keys = JSON.parse(atob(keyRes.data));
+                // 2. API - Datacontent (Extracting Keys)
+                status.innerText = "Extracting Keys...";
+                const keyRes = await fetch('/api/proxy?endpoint=datacontent').then(r => r.json());
+                
+                // Key Parsing logic
+                const keys = typeof keyRes.data === 'string' ? JSON.parse(atob(keyRes.data)) : keyRes.data;
+                const KID = keys.keyid; // 554eb551...
+                const KEY = keys.key;   // 85c2f3ba...
 
-            log("Keys acquired. Initializing Player...");
+                // 3. Authorizing Access (DRM Config)
+                status.innerText = "Authorizing Access...";
+                player.configure({
+                    drm: {
+                        clearKeys: { [KID]: KEY }
+                    }
+                });
 
-            // 2. Shaka Player Setup
-            const player = new shaka.Player(video);
-            player.configure({
-                drm: { clearKeys: { [keys.keyid]: keys.key } }
-            });
+                // 4. Network Filter (Injecting Headers/Referer)
+                player.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    request.headers['Referer'] = 'https://www.pw.live/';
+                    request.headers['User-Agent'] = 'Mozilla/5.0';
+                });
 
-            await player.load(manifestUrl);
-            log("Video loaded successfully!");
-            log("Download process triggered via browser buffer...");
+                // 5. Initializing Player
+                status.innerText = "Initializing Player...";
+                await player.load(manifestUrl);
+                status.innerText = "Playback Started!";
 
-        } catch (e) {
-            log("ERROR: " + e.message);
+            } catch (e) {
+                status.style.color = "red";
+                status.innerText = "Error: " + e.message;
+                console.error("DRM Init Error:", e);
+            }
         }
-    }
-</script>
+
+        initPlayer();
+    </script>
 </body>
 </html>
