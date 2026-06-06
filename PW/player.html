@@ -2,7 +2,6 @@
 <html>
 <head>
     <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.js"></script>
-    <style>body { margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh; } video { width:100%; max-width:800px; }</style>
 </head>
 <body>
     <video id="video" controls autoplay></video>
@@ -10,32 +9,38 @@
     <script>
         const video = document.getElementById('video');
         const player = new shaka.Player(video);
-        
-        // URL se params nikalne ke liye
+
+        // URL se parameters extract karna
         const params = new URLSearchParams(window.location.search);
-        const batchId = params.get('batchId');
-        const subjectId = params.get('subjectId');
-        const contentId = params.get('contentId');
+        const manifestUrl = params.get('url'); // URL jo aap pass kar rahe hain
+        const kid = params.get('kid');         // Key ID
 
         async function init() {
             try {
-                // IDs check karein
-                if(!batchId || !contentId) throw new Error("Missing IDs in URL");
+                if (!manifestUrl) {
+                    throw new Error("URL parameter missing in the link!");
+                }
 
-                // Dynamic API Calls
-                const [vidRes, keyRes] = await Promise.all([
-                    fetch(`/api/proxy?endpoint=attachments-url&BatchId=${batchId}&SubjectId=${subjectId}&ContentId=${contentId}`).then(r => r.json()),
-                    fetch(`/api/proxy?endpoint=datacontent&batchId=${batchId}&contentType=videos`).then(r => r.json())
-                ]);
-
-                player.configure({
-                    drm: { clearKeys: { [keyRes.keyid]: keyRes.key } }
+                // Headers configure karna taaki server ko lage request pw.live se hai
+                player.getNetworkingEngine().registerRequestFilter((type, request) => {
+                    request.headers['Referer'] = 'https://pw.live/';
+                    request.headers['Origin'] = 'https://pw.live/';
                 });
 
-                await player.load(vidRes.url);
+                // Agar DRM key mil gayi hai toh apply karein
+                if (kid) {
+                    player.configure({
+                        drm: {
+                            clearKeys: { [kid]: "YOUR_KEY_HERE" } // Yahan dynamic key fetching logic aayega
+                        }
+                    });
+                }
+
+                await player.load(manifestUrl);
+                console.log("Video Loaded");
             } catch (e) {
-                console.error("Player Error:", e);
-                alert("Error loading video: " + e.message);
+                console.error("Error:", e);
+                alert("Player Error: " + e.message);
             }
         }
         init();
