@@ -57,7 +57,7 @@
             });
 
             const query = params.toString();
-            const proxyUrl = `https://devcoderz-player.vercel.app/api/stream.js?${query}`;
+            const proxyUrl = `      https://eduvibe-pw-api.wasmer.app/get-lectures.php?batch_id=${encodeURIComponent(batch_id)}&subject_id=${encodeURIComponent(subject_id)}&topic_id=${encodeURIComponent(targetTopicId)}&tab=${encodeURIComponent(activeTab)}`;
 
             try {
                 const response = await fetch(proxyUrl);
