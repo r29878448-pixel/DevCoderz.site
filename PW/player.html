@@ -1,77 +1,91 @@
 <!DOCTYPE html>
-<html lang="hi" style="user-select: none;">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Devansh Player</title>
-  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.min.js"></script>
-  <style>
-    :root { --accent: #0ea5e9; --glass: rgba(255,255,255,0.15); }
-    body { margin: 0; background: #000; font-family: sans-serif; color: white; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The DevCoderZ Player</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+    :root { --primary: #0ea5e9; }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: sans-serif; overflow: hidden; }
     
-    .player-container { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
-    video { width: 100%; height: 100%; }
+    #player-container { position: relative; width: 100vw; height: 100vh; background: #000; }
+    video { width: 100%; height: 100%; object-fit: contain; }
 
-    .powered-by {
-      position: absolute; top: 20px; right: 20px; z-index: 99;
-      background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(8px);
-      padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
-      border: 1px solid rgba(255, 255, 255, 0.2); pointer-events: none;
-    }
+    /* Permanent Watermark */
+    .brand-logo { position: absolute; top: 15px; left: 15px; z-index: 100; color: var(--primary); font-weight: 900; font-size: 18px; pointer-events: none; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
 
-    .controls-bar {
-      position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.6);
-      padding: 20px; display: flex; flex-direction: column; gap: 10px;
-    }
-
-    #progressBar { width: 100%; height: 6px; background: #334155; border-radius: 4px; cursor: pointer; }
-    #progressPlayed { height: 100%; width: 0%; background: var(--accent); border-radius: 4px; }
+    /* Controls Layer */
+    .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); z-index: 50; }
     
-    .btn-group { display: flex; gap: 15px; }
-    button { background: var(--accent); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-  </style>
+    /* Progress Bar */
+    .progress-track { width: 100%; height: 5px; background: rgba(255,255,255,0.2); border-radius: 5px; cursor: pointer; margin-bottom: 15px; }
+    #progress-fill { height: 100%; width: 0%; background: var(--primary); border-radius: 5px; }
+
+    /* Buttons Row */
+    .btn-row { display: flex; justify-content: space-between; align-items: center; color: #fff; }
+    .btns-group { display: flex; gap: 20px; align-items: center; }
+    .icon-btn { background: none; border: none; color: #fff; cursor: pointer; font-size: 20px; padding: 5px; }
+</style>
 </head>
 <body>
 
-  <div class="player-container">
+<div id="player-container">
     <video id="video" playsinline></video>
-    <div class="powered-by">Powered by Devansh Sharma</div>
     
-    <div class="controls-bar">
-      <div id="progressBar"><div id="progressPlayed"></div></div>
-      <div class="btn-group">
-        <button id="playBtn">Play/Pause</button>
-        <button id="fullScreenBtn">Fullscreen</button>
-      </div>
-    </div>
-  </div>
+    <div class="brand-logo">THE DEVCODERZ</div>
 
-  <script>
-    const video = document.getElementById('video');
-    const playBtn = document.getElementById('playBtn');
-    const progressPlayed = document.getElementById('progressPlayed');
-
-    async function initPlayer() {
-        const player = new shaka.Player(video);
-        const params = new URLSearchParams(window.location.search);
+    <div class="controls-overlay">
+        <div class="progress-track" id="progress-container"><div id="progress-fill"></div></div>
         
-        try {
-            // Yahan wahi original API logic hai
-            const manifestUrl = await getStreamUrl(params); 
-            await player.load(manifestUrl);
-        } catch (e) { console.error("Error loading stream", e); }
+        <div class="btn-row">
+            <div class="btns-group">
+                <button class="icon-btn" onclick="seek(-10)">⟲ 10</button>
+                <button class="icon-btn" id="playPause">▶</button>
+                <button class="icon-btn" onclick="seek(10)">10 ⟳</button>
+            </div>
+            <div class="btns-group">
+                <button class="icon-btn" onclick="toggleFS()">⛶</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/PW/player.js"></script>
+<script>
+    const video = document.getElementById('video');
+    const progressFill = document.getElementById('progress-fill');
+    const playPauseBtn = document.getElementById('playPause');
+
+    // Load URL from Params
+    const urlParams = new URLSearchParams(window.location.search);
+    const streamUrl = urlParams.get("Url");
+
+    if (streamUrl) {
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(decodeURIComponent(streamUrl));
+            hls.attachMedia(video);
+        } else {
+            video.src = decodeURIComponent(streamUrl);
+        }
     }
 
-    playBtn.onclick = () => video.paused ? video.play() : video.pause();
-    video.ontimeupdate = () => {
-        progressPlayed.style.width = (video.currentTime / video.duration) * 100 + "%";
+    playPauseBtn.onclick = () => {
+        video.paused ? video.play() : video.pause();
+        playPauseBtn.textContent = video.paused ? "▶" : "❚❚";
     };
 
-    document.getElementById('fullScreenBtn').onclick = () => video.requestFullscreen();
+    video.ontimeupdate = () => {
+        const percent = (video.currentTime / video.duration) * 100;
+        progressFill.style.width = percent + "%";
+    };
 
-    // Original Player.js logic wahi rahega jo pehle tha
-    initPlayer();
-  </script>
-  <script src="/PW/player.js"></script>
+    function seek(sec) { video.currentTime += sec; }
+    function toggleFS() {
+        if (!document.fullscreenElement) document.getElementById('player-container').requestFullscreen();
+        else document.exitFullscreen();
+    }
+</script>
 </body>
 </html>
