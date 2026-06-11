@@ -3,26 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The DevCoderZ Player</title>
+    <title>The DevCoderZ Premium Player</title>
     <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.min.js"></script>
     <style>
         :root { --primary: #0ea5e9; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: sans-serif; overflow: hidden; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
         
-        #player-container { position: relative; width: 100vw; height: 100vh; background: #000; }
+        #player-container { position: relative; width: 100vw; height: 100vh; }
         video { width: 100%; height: 100%; object-fit: contain; }
 
-        /* Fixed Branding */
-        .brand-logo { position: absolute; top: 15px; left: 15px; z-index: 100; color: var(--primary); font-weight: 900; font-size: 18px; pointer-events: none; }
+        /* Transparent Watermark */
+        .brand-logo { position: absolute; top: 15px; left: 15px; z-index: 100; color: rgba(14, 165, 233, 0.5); font-weight: 900; font-size: 18px; pointer-events: none; }
 
         /* Controls */
-        .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); z-index: 50; }
-        .progress-track { width: 100%; height: 6px; background: rgba(255,255,255,0.2); border-radius: 5px; cursor: pointer; margin-bottom: 15px; }
-        #progress-fill { height: 100%; width: 0%; background: var(--primary); border-radius: 5px; }
+        .controls-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 15px; background: linear-gradient(transparent, #000); z-index: 50; }
         
-        .btn-row { display: flex; justify-content: space-between; align-items: center; color: #fff; }
-        .btns-group { display: flex; gap: 20px; align-items: center; }
-        .icon-btn { background: none; border: none; color: #fff; cursor: pointer; font-size: 18px; padding: 5px; }
+        /* Progress & Timer */
+        .progress-wrapper { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .progress-track { flex-grow: 1; height: 6px; background: #444; border-radius: 5px; cursor: pointer; position: relative; }
+        #progress-fill { height: 100%; width: 0%; background: var(--primary); border-radius: 5px; }
+        #thumb { position: absolute; top: -3px; width: 12px; height: 12px; background: #fff; border-radius: 50%; left: 0; }
+        .time-display { font-size: 12px; min-width: 80px; }
+
+        /* Buttons */
+        .btn-row { display: flex; justify-content: space-between; align-items: center; }
+        .btns-group { display: flex; gap: 15px; align-items: center; }
+        .icon-btn { background: none; border: none; color: #fff; cursor: pointer; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -32,15 +38,26 @@
     <div class="brand-logo">THE DEVCODERZ</div>
 
     <div class="controls-overlay">
-        <div class="progress-track" id="progress-container"><div id="progress-fill"></div></div>
+        <div class="progress-wrapper">
+            <span class="time-display" id="time">00:00 / 00:00</span>
+            <div class="progress-track" id="progress-container">
+                <div id="progress-fill"></div>
+                <div id="thumb"></div>
+            </div>
+        </div>
         
         <div class="btn-row">
             <div class="btns-group">
-                <button class="icon-btn" onclick="seek(-10)">⟲ 10</button>
+                <button class="icon-btn" onclick="seek(-10)">⟲</button>
                 <button class="icon-btn" id="playPause">▶</button>
-                <button class="icon-btn" onclick="seek(10)">10 ⟳</button>
+                <button class="icon-btn" onclick="seek(10)">⟳</button>
             </div>
             <div class="btns-group">
+                <button class="icon-btn" onclick="window.location.href='download.html'">⬇</button>
+                <button class="icon-btn" onclick="alert('Attachments open here')">📎</button>
+                <select id="speed" onchange="video.playbackRate = this.value">
+                    <option value="1">1x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+                </select>
                 <button class="icon-btn" onclick="toggleFS()">⛶</button>
             </div>
         </div>
@@ -52,39 +69,53 @@
     const video = document.getElementById('video');
     const player = new shaka.Player(video);
     const progressFill = document.getElementById('progress-fill');
+    const thumb = document.getElementById('thumb');
+    const timeDisplay = document.getElementById('time');
     const playPauseBtn = document.getElementById('playPause');
 
-    // Shaka Player Initialization
-    async function init() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const source = urlParams.get("Url");
-        
-        if (source) {
-            try {
-                await player.load(decodeURIComponent(source));
-            } catch (e) {
-                console.error("Error loading stream:", e);
-            }
-        }
+    // Drag Logic
+    let isDragging = false;
+    document.getElementById('progress-container').onpointerdown = (e) => {
+        isDragging = true;
+        updateSeek(e);
+    };
+    window.onpointermove = (e) => { if(isDragging) updateSeek(e); };
+    window.onpointerup = () => isDragging = false;
+
+    function updateSeek(e) {
+        const rect = document.getElementById('progress-container').getBoundingClientRect();
+        const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        video.currentTime = pos * video.duration;
     }
+
+    // Time Format
+    function formatTime(s) {
+        const m = Math.floor(s/60); s = Math.floor(s%60);
+        return `${m}:${s.toString().padStart(2,'0')}`;
+    }
+
+    video.ontimeupdate = () => {
+        const percent = (video.currentTime / video.duration) * 100;
+        progressFill.style.width = percent + "%";
+        thumb.style.left = percent + "%";
+        timeDisplay.textContent = `${formatTime(video.currentTime)} / ${formatTime(video.duration)}`;
+    };
 
     playPauseBtn.onclick = () => {
         video.paused ? video.play() : video.pause();
         playPauseBtn.textContent = video.paused ? "▶" : "❚❚";
     };
 
-    video.ontimeupdate = () => {
-        if(video.duration) {
-            progressFill.style.width = (video.currentTime / video.duration) * 100 + "%";
-        }
-    };
-
-    function seek(sec) { video.currentTime += sec; }
     function toggleFS() {
-        if (!document.fullscreenElement) document.getElementById('player-container').requestFullscreen();
-        else document.exitFullscreen();
+        !document.fullscreenElement ? document.getElementById('player-container').requestFullscreen() : document.exitFullscreen();
     }
 
+    // Load Stream
+    async function init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const source = urlParams.get("Url");
+        if(source) await player.load(decodeURIComponent(source));
+    }
     init();
 </script>
 </body>
