@@ -37,25 +37,22 @@
         const params = new URLSearchParams(window.location.search);
         const bId = params.get("batch_id");
         const sId = params.get("subject_id");
-        const tId = params.get("topic_id");
+        const tId = params.get("topic_id"); // Assuming this is topicSlug
 
         async function loadContent(tab, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             if(btn) btn.classList.add('active');
-            
+
             const container = document.getElementById('contentContainer');
             container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
 
             try {
-                // Fetching via API
                 const res = await fetch(`https://mtaiirus-api.onrender.com/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&topicSlug=${tId}&contentType=${tab}`);
                 const json = await res.json();
-                
-                // Decryption logic
                 const decrypted = await decryptPayload(json.data);
-                const items = decrypted.data || [];
                 
-                render(items, tab);
+                // Hum poora 'item' object pass karenge taaki saari details mile
+                render(decrypted.data || [], tab);
             } catch (e) {
                 container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data.</div>';
             }
@@ -76,8 +73,9 @@
             const container = document.getElementById('contentContainer');
             if(items.length === 0) { container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>'; return; }
 
+            // Item ko stringify karke pass kar rahe hain
             container.innerHTML = items.map(i => `
-                <div class="lecture-card" onclick="handleClick('${tab}', '${i.video_id || i._id}', '${encodeURIComponent(i.name || i.topic || 'Untitled')}')">
+                <div class="lecture-card" onclick="handleClick('${tab}', ${JSON.stringify(i).replace(/"/g, '&quot;')})">
                     <div class="img-box">
                         <img src="${i.image || 'https://static.pw.live/react-batches/assets/study/blue-play-icon.svg'}">
                         ${tab.includes('videos') ? '<img src="https://static.pw.live/react-batches/assets/study/blue-play-icon.svg" class="play-icon">' : ''}
@@ -90,12 +88,13 @@
             `).join('');
         }
 
-        function handleClick(tab, id, name) {
+        function handleClick(tab, item) {
             if (tab.includes('videos')) {
-                window.location.href = `./player.html?video_id=${id}&name=${name}`;
+                // FIXED URL: Yahi format aapke player.html ko chahiye
+                const url = `./player.html?video_id=${item.video_id || item._id}&subject_slug=${sId}&batch_id=${bId}&schedule_id=${item.video_id || item._id}&subject_id=${sId}&topicSlug=${tId}`;
+                window.location.href = url;
             } else {
-                // Notes/PDF ke liye logic
-                alert("Opening: " + decodeURIComponent(name));
+                alert("Opening content...");
             }
         }
 
