@@ -38,3 +38,53 @@
                 <div class="btn" id="playPause">▶</div>
                 <div class="btn" onclick="seek(10)">⟳</div>
                 <div class="btn" onclick="toggleFS()">⛶</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const v = document.getElementById("video");
+        const bar = document.getElementById("bar");
+        const playBtn = document.getElementById("playPause");
+
+        // API Connection & URL Param Logic
+        const params = new URLSearchParams(window.location.search);
+        const videoUrl = params.get("Url"); 
+
+        async function initPlayer() {
+            if (!videoUrl) return;
+            
+            const source = decodeURIComponent(videoUrl);
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(source);
+                hls.attachMedia(v);
+            } else {
+                v.src = source;
+            }
+        }
+
+        playBtn.onclick = () => {
+            v.paused ? v.play() : v.pause();
+            playBtn.textContent = v.paused ? "▶" : "❚❚";
+        };
+
+        v.ontimeupdate = () => {
+            bar.style.width = (v.currentTime / v.duration) * 100 + "%";
+        };
+
+        function seek(sec) { v.currentTime += sec; }
+
+        function toggleFS() {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+        }
+
+        document.getElementById("progress").onclick = (e) => {
+            v.currentTime = (e.offsetX / e.target.offsetWidth) * v.duration;
+        };
+
+        initPlayer();
+    </script>
+</body>
+</html>
