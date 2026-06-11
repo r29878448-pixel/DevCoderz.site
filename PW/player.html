@@ -80,7 +80,7 @@
         lastTap = now;
     }
 
-    // Redirect with Params
+    
     function downloadVideo() {
         const p = new URLSearchParams(window.location.search);
         window.location.href = `download.html?v=${p.get('v')}&b=${p.get('b')}`;
