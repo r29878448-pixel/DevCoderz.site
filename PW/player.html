@@ -52,7 +52,7 @@
 
     async function loadStream() {
         try {
-            // Agar player.js load ho raha hai, toh ye line chalni chahiye
+            
             await player.load(decodeURIComponent(videoUrl));
             console.log("Stream Loaded Successfully");
         } catch (e) {
