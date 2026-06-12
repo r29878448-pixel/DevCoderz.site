@@ -3,31 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mtaiirus Player</title>
+  <title>Premium Player Engine</title>
   <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.min.js"></script>
   <style>
     :root { --accent: #0ea5e9; --accentl: #7dd3fc; }
     body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
     #player-container { width: 100vw; height: 100vh; position: relative; }
     video { width: 100%; height: 100%; object-fit: contain; }
-    
-    /* Branding */
-    .branding { position: absolute; top: 15px; left: 15px; font-size: 8px; font-weight: 800; color: var(--accentl); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; opacity: 0.7; z-index: 10; }
 
-    /* Footer & Progress */
-    .footer { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, #000); z-index: 20; }
-    .time-display { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; }
+    /* Branding & Controls */
+    .branding { position: absolute; top: 15px; left: 15px; font-size: 8px; font-weight: 800; color: var(--accentl); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; z-index: 25; }
+    .controls-wrapper { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, #000); transition: opacity 0.3s; z-index: 20; }
+    .hidden { opacity: 0; pointer-events: none; }
+
+    /* Progress & Timer */
+    .time-display { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; font-family: monospace; }
     .progress-bar { width: 100%; height: 6px; background: #333; cursor: pointer; position: relative; border-radius: 3px; }
     .progress-played { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; position: relative; }
-    .thumb { position: absolute; right: -6px; top: -3px; width: 12px; height: 12px; background: var(--accentl); border-radius: 50%; }
+    .thumb { position: absolute; right: -6px; top: -3px; width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 0 8px var(--accent); }
 
-    /* Controls */
-    .controls { display: flex; gap: 15px; margin-top: 15px; }
-    button { background: rgba(255,255,255,0.05); border: 1px solid #444; color: #fff; padding: 10px 15px; border-radius: 8px; cursor: pointer; }
-    
-    /* Double Tap Layer */
-    .tap-layer { position: absolute; inset: 0; display: flex; z-index: 5; }
-    .tap-box { flex: 1; }
+    /* Buttons */
+    .btn-row { display: flex; gap: 15px; margin-top: 15px; }
+    .btn { background: rgba(255,255,255,0.1); border: 1px solid #444; color: #fff; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; }
+    #play::before { content: "▶"; font-size: 16px; }
+    #play.pause::before { content: "❚❚"; font-size: 14px; }
+
+    /* Settings Menu */
+    .menu { position: absolute; bottom: 70px; right: 20px; background: #111; padding: 15px; border-radius: 10px; display: none; z-index: 30; border: 1px solid #333; }
+    .menu select { background: #222; color: #fff; border: 1px solid #444; padding: 5px; width: 100%; margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -36,53 +39,62 @@
   <video id="video" playsinline></video>
   <div class="branding">DEVELOPED BY DEVANSH SHARMA</div>
   
-  <div class="tap-layer">
-    <div class="tap-box" onclick="seek(-10)"></div>
-    <div class="tap-box" onclick="seek(10)"></div>
-  </div>
-
-  <div class="footer">
+  <div class="controls-wrapper" id="ctrls">
     <div class="time-display"><span id="cur">00:00:00</span><span id="dur">00:00:00</span></div>
     <div id="progressBar" class="progress-bar">
       <div id="progressPlayed" class="progress-played"><div class="thumb"></div></div>
     </div>
-    <div class="controls">
-      <button onclick="togglePlay()" id="playBtn">Play/Pause</button>
-      <button onclick="toggleFS()">Full Screen</button>
-      <button onclick="download()">Download</button>
-      <button onclick="alert('Attachments')">📎</button>
-      <button onclick="alert('Settings')">⚙️</button>
+    <div class="btn-row">
+      <div class="btn" id="play" onclick="togglePlay()"></div>
+      <div class="btn" id="fs" onclick="toggleFS()">⛶</div>
+      <div class="btn" id="settingsBtn" onclick="toggleMenu()">⚙️</div>
     </div>
+  </div>
+
+  <div class="menu" id="setMenu">
+    <label>Speed</label>
+    <select onchange="video.playbackRate = this.value">
+      <option value="1">1x</option><option value="1.5">1.5x</option><option value="2">2x</option><option value="3">3x</option>
+    </select>
+    <label>Quality</label>
+    <select id="qualitySelect"><option value="auto">Auto</option><option value="720">720p</option><option value="480">480p</option></select>
   </div>
 </div>
 
 <script>
-  const video = document.getElementById('video');
-  const player = new shaka.Player(video);
+  const video = document.getElementById('video'), ctrls = document.getElementById('ctrls');
+  let hideTimer;
 
-  // Time format
-  function fmt(s) {
-    return new Date(s * 1000).toISOString().substr(11, 8);
+  // Auto Hide Controls
+  function resetTimer() {
+    ctrls.classList.remove('hidden');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => ctrls.classList.add('hidden'), 3000);
+  }
+  document.onmousemove = resetTimer;
+  document.onclick = (e) => { if(!e.target.closest('.menu')) { resetTimer(); if(e.target.id !== 'play' && e.target.id !== 'fs') ctrls.classList.toggle('hidden'); } };
+
+  // Play/Pause
+  function togglePlay() {
+    if(video.paused) { video.play(); document.getElementById('play').classList.add('pause'); }
+    else { video.pause(); document.getElementById('play').classList.remove('pause'); }
   }
 
-  // Smooth Progress
-  video.ontimeupdate = () => {
-    let pct = (video.currentTime / video.duration) * 100;
-    document.getElementById('progressPlayed').style.width = pct + '%';
-    document.getElementById('cur').innerText = fmt(video.currentTime);
-    document.getElementById('dur').innerText = fmt(video.duration || 0);
-  };
-
-  // Double Tap & Seek
-  function seek(sec) { video.currentTime += sec; }
-  function togglePlay() { video.paused ? video.play() : video.pause(); }
-  function toggleFS() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
-  
-  // Progress Drag
+  // Smooth Seek
   document.getElementById('progressBar').onpointerdown = (e) => {
     let rect = e.target.getBoundingClientRect();
     video.currentTime = ((e.clientX - rect.left) / rect.width) * video.duration;
   };
+
+  function fmt(s) { return new Date(s * 1000).toISOString().substr(11, 8); }
+  video.ontimeupdate = () => {
+    document.getElementById('progressPlayed').style.width = (video.currentTime / video.duration) * 100 + '%';
+    document.getElementById('cur').innerText = fmt(video.currentTime);
+    document.getElementById('dur').innerText = fmt(video.duration || 0);
+  };
+
+  function toggleFS() { !document.fullscreenElement ? document.documentElement.requestFullscreen() : document.exitFullscreen(); }
+  function toggleMenu() { document.getElementById('setMenu').style.display = document.getElementById('setMenu').style.display === 'block' ? 'none' : 'block'; }
 </script>
 <script src="/PW/player.js"></script>
 </body>
