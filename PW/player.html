@@ -88,7 +88,7 @@
   function seek(s) { video.currentTime += s; }
   function goToDownload() { window.location.href = `download.html?url=${encodeURIComponent(video.currentSrc || window.location.href)}`; }
   
-  // Eduvibe style click behavior
+  
   document.getElementById('player-container').onclick = (e) => {
     if(!e.target.closest('.controls-wrapper') && !e.target.closest('.menu')) {
         menu.style.display = 'none';
