@@ -1,110 +1,92 @@
-<!DOCTYPE html><html lang="hi" style="user-select: none;"><head>
+<!DOCTYPE html>
+<html lang="hi" style="user-select: none;">
+<head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Mtaiirus Player</title>
-  <link rel="icon" type="image/x-icon" href="https://i.ibb.co/G3TLgSgJ/pngtree-mv-vm-letter-vector-logo-image-332121.jpg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800;900&amp;family=DM+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.7.11/dist/shaka-player.compiled.min.js"></script>
   <style>
     :root {
       --bg: #000;
-      --glass: #111;
-      --glass2: #1a1a1a;
-      --line: rgba(14,165,233,.18);
-      --text: #F5F2EB;
-      --muted: rgba(245,242,235,.55);
       --accent: #0ea5e9;
       --accentl: #7dd3fc;
-      --green: #4ade80;
-      --danger: #f87171;
-      --shadow: 0 30px 90px rgba(0,0,0,.65);
-      --radius: 16px;
-      --font-heading: 'Syne', sans-serif;
-      --font-body: 'DM Sans', sans-serif;
+      --text: #fff;
     }
-    * { box-sizing: border-box }
-    html, body { height: 100% }
-    body { margin: 0; overflow: hidden; background: #000; color: var(--text); font-family: var(--font-body); -webkit-tap-highlight-color: transparent; }
-    .app { width: 100vw; height: 100dvh; display: flex; background: #000; overflow: hidden; }
-    .main { position: relative; flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; background: #000; }
-    .player { position: relative; flex: 1; min-height: 0; background: #000; overflow: hidden; user-select: none; isolation: isolate; }
-    .player video { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: contain; }
-    .recorded-badge { position: absolute; z-index: 23; top: 18px; left: 18px; padding: 6px 13px; border-radius: 999px; border: 1px solid var(--line); background: rgba(0,0,0,.7); color: var(--accentl); font-family: var(--font-heading); font-size: 11px; font-weight: 800; letter-spacing: 1.2px; }
-    .topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 22; display: flex; justify-content: space-between; align-items: center; padding: 18px; background: linear-gradient(180deg, rgba(0,0,0,.6), transparent); }
-    .icon-btn, .ctrl-btn { border: 1px solid var(--line); background: rgba(255,255,255,.05); color: var(--text); cursor: pointer; display: grid; place-items: center; transition: .16s ease; }
-    .icon-btn { width: 38px; height: 38px; border-radius: 10px; }
-    .ctrl-btn { width: 37px; height: 37px; border-radius: 10px; }
-    .ctrl-btn.play { background: var(--accent); border-color: var(--accent); }
-    .ctrl-btn.purple { color: var(--accentl); }
-    .center-play { position: absolute; z-index: 18; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 78px; height: 78px; border-radius: 50%; border: 1px solid var(--accent); background: rgba(0,0,0,.7); color: var(--accent); display: grid; place-items: center; cursor: pointer; }
-    .loader { position: absolute; z-index: 30; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: #000; }
-    .spinner-bold { width: 66px; height: 66px; border-radius: 50%; border: 6px solid #333; border-top-color: var(--accent); animation: spin .85s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg) } }
-    .footer { position: absolute; z-index: 24; left: 18px; right: 18px; bottom: 18px; border-radius: 14px; padding: 11px 16px; background: rgba(20,20,20,.9); border: 1px solid var(--line); }
-    .progress-bar { position: relative; height: 16px; cursor: pointer; display: flex; align-items: center; touch-action: none; }
-    .progress-bar:before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 6px; border-radius: 999px; background: #333; }
-    .progress-played { position: absolute; left: 0; top: 50%; height: 6px; transform: translateY(-50%); border-radius: 999px; background: var(--accent); width: 0; }
-    .progress-thumb { position: absolute; top: 50%; left: 0; width: 18px; height: 18px; border-radius: 50%; transform: translate(-50%,-50%); background: var(--accentl); pointer-events: none; }
-    .controls-row { display: flex; align-items: center; justify-content: space-between; margin-top: 15px; }
-    .controls-left, .controls-right { display: flex; align-items: center; gap: 9px; }
+    /* Fixed Branding Size */
+    .recorded-badge { 
+      position: absolute; z-index: 23; top: 18px; left: 18px; 
+      padding: 4px 8px; border-radius: 6px; 
+      border: 1px solid rgba(14,165,233,.3); 
+      background: rgba(0,0,0,.5); color: var(--accentl); 
+      font-size: 9px; font-weight: 600; text-transform: uppercase;
+    }
+    /* Baaki Original CSS Structure */
+    body { margin: 0; background: #000; color: #fff; font-family: sans-serif; }
+    .player { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+    video { width: 100%; height: 100%; object-fit: contain; }
+    .footer { position: absolute; bottom: 20px; width: 100%; padding: 0 20px; }
+    .progress-bar { width: 100%; height: 6px; background: #333; cursor: pointer; position: relative; border-radius: 3px; }
+    .progress-played { height: 100%; background: var(--accent); width: 0%; border-radius: 3px; }
+    .progress-thumb { position: absolute; top: -3px; width: 12px; height: 12px; background: var(--accentl); border-radius: 50%; pointer-events: none; }
+    .controls { display: flex; gap: 15px; margin-top: 15px; align-items: center; }
+    button { background: rgba(255,255,255,0.1); border: 1px solid #444; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
   </style>
 </head>
-
 <body>
-  <div class="app">
-    <main id="rootPlayer" class="main controls-visible">
-      <section id="player" class="player controls-visible">
-        <video id="video" playsinline=""></video>
-        <div class="recorded-badge">DEVELOPED BY DEVANSH SHARMA</div>
-        <div id="topbar" class="topbar">
-          <div class="top-left"><button id="backBtn" class="icon-btn">←</button></div>
-          <div class="top-right"><button id="settingsBtn" class="icon-btn">⚙</button></div>
-        </div>
-        <button id="centerPlay" class="center-play">▶</button>
-        <div id="footer" class="footer">
-          <div id="progressBar" class="progress-bar">
-            <div id="progressPlayed" class="progress-played"></div>
-            <div id="progressThumb" class="progress-thumb"></div>
-          </div>
-          <div class="controls-row">
-            <div class="controls-left">
-              <button id="playBtn" class="ctrl-btn play">▶</button>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+
+<div class="player" id="rootPlayer">
+  <video id="video" playsinline></video>
+  <div class="recorded-badge">DEVELOPED BY DEVANSH SHARMA</div>
+
+  <div class="footer">
+    <div id="progressBar" class="progress-bar">
+      <div id="progressPlayed" class="progress-played"></div>
+      <div id="progressThumb" class="progress-thumb"></div>
+    </div>
+    
+    <div class="controls">
+      <button id="playBtn">Play/Pause</button>
+      <button id="fullscreenBtn">Fullscreen</button>
+      <button id="downloadBtn">Download</button>
+      <button id="attachmentsBtn">Attachments</button>
+      <button id="settingsBtn">Settings</button>
+    </div>
   </div>
+</div>
 
-  <script>
-    const video = document.getElementById('video');
-    const progressBar = document.getElementById('progressBar');
-    const progressPlayed = document.getElementById('progressPlayed');
-    const progressThumb = document.getElementById('progressThumb');
+<script>
+  const video = document.getElementById('video');
+  const progressBar = document.getElementById('progressBar');
+  const progressPlayed = document.getElementById('progressPlayed');
+  const progressThumb = document.getElementById('progressThumb');
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const rootPlayer = document.getElementById('rootPlayer');
 
-    function updateSeek(e) {
-      const rect = progressBar.getBoundingClientRect();
-      let pos = (e.clientX - rect.left) / rect.width;
-      pos = Math.max(0, Math.min(1, pos));
-      video.currentTime = pos * video.duration;
-    }
+  // Ultra Smooth Drag
+  function updateSeek(e) {
+    const rect = progressBar.getBoundingClientRect();
+    let pos = (e.clientX - rect.left) / rect.width;
+    pos = Math.max(0, Math.min(1, pos));
+    video.currentTime = pos * video.duration;
+  }
 
-    progressBar.onpointerdown = (e) => {
-      updateSeek(e);
-      window.onpointermove = updateSeek;
-      window.onpointerup = () => { window.onpointermove = null; };
-    };
+  progressBar.onpointerdown = (e) => {
+    updateSeek(e);
+    window.onpointermove = updateSeek;
+    window.onpointerup = () => { window.onpointermove = null; };
+  };
 
-    video.ontimeupdate = () => {
-      const pct = (video.currentTime / video.duration) * 100;
-      progressPlayed.style.width = pct + '%';
-      progressThumb.style.left = pct + '%';
-    };
-  </script>
-  <script src="/PW/player.js"></script>
-</body></html>
+  video.ontimeupdate = () => {
+    const pct = (video.currentTime / video.duration) * 100;
+    progressPlayed.style.width = pct + '%';
+    progressThumb.style.left = pct + '%';
+  };
+
+  // Fullscreen
+  fullscreenBtn.onclick = () => {
+    if (!document.fullscreenElement) rootPlayer.requestFullscreen();
+    else document.exitFullscreen();
+  };
+</script>
+<script src="/PW/player.js"></script>
+</body>
+</html>
