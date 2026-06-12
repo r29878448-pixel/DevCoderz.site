@@ -1,85 +1,46 @@
 <!DOCTYPE html>
-<html lang="hi" style="user-select: none;">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>DevCoderZ-Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Lecture Player</title>
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <style>
-    :root { --accent: #0ea5e9; }
-    body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; }
-    
-    #player-container { 
-      width: 100vw; height: 100dvh; 
-      position: relative; display: flex; 
-      flex-direction: column; transition: transform 0.3s; 
-    }
-    
-    video { width: 100%; height: 100%; object-fit: contain; }
-
-    .controls-wrapper { 
-      position: absolute; bottom: 0; width: 100%; 
-      padding: 15px; background: linear-gradient(transparent, #000); 
-      z-index: 100; transition: opacity 0.3s; 
-    }
-    .hidden { opacity: 0; pointer-events: none; }
-
-    .time-row { display: flex; align-items: center; gap: 10px; font-size: 11px; margin-bottom: 10px; }
-    .progress-bar { flex: 1; height: 10px; background: rgba(255,255,255,0.2); cursor: pointer; position: relative; }
-    .progress-played { height: 100%; background: var(--accent); width: 0%; }
-
-    .btn-row { display: flex; gap: 15px; align-items: center; justify-content: center; }
-    .btn { cursor: pointer; font-size: 20px; color: white; padding: 10px; }
-
-    /* Landscape Fix */
-    .landscape-mode {
-      position: fixed; top: 0; left: 0; 
-      width: 100dvh; height: 100vw;
-      transform-origin: top left; 
-      transform: rotate(90deg) translate(0, -100%);
-    }
+    body { margin: 0; background: #000; }
+    .video-container { width: 100%; height: 100dvh; position: relative; }
+    video { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
-<div id="player-container">
-  <video id="video" playsinline></video>
-  
-  <div class="controls-wrapper" id="ctrls">
-    <div class="time-row">
-      <span id="cur">00:00:00</span>
-      <div id="progressBar" class="progress-bar"><div id="progressPlayed" class="progress-played"></div></div>
-      <span id="dur">00:00:00</span>
-    </div>
-    <div class="btn-row">
-      <div class="btn" onclick="seek(-10)">⟲</div>
-      <div class="btn" id="play" onclick="togglePlay()">▶</div>
-      <div class="btn" onclick="seek(10)">⟳</div>
-      <div class="btn" onclick="toggleFS()">⛶</div>
-    </div>
+  <div class="video-container">
+    <video id="lecture-player" playsinline controls></video>
   </div>
-</div>
 
-<script>
-  const video = document.getElementById('video'), ctrls = document.getElementById('ctrls'), container = document.getElementById('player-container');
-  
-  function togglePlay() { video.paused ? video.play() : video.pause(); }
-  function seek(s) { video.currentTime += s; }
-  
-  async function toggleFS() {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen();
-      container.classList.add('landscape-mode');
-    } else {
-      await document.exitFullscreen();
-      container.classList.remove('landscape-mode');
-    }
-  }
+  <script>
+    const player = new Plyr('#lecture-player', {
+      controls: ['rewind', 'play', 'volume', 'fast-forward', 'progress', 'current-time', 'duration', 'download', 'settings', 'fullscreen'],
+      settings: ['quality', 'speed'],
+      quality: { default: 720, options: [720, 480, 360, 240] },
+      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3] }
+    });
 
-  video.addEventListener('play', () => document.getElementById('play').innerText = "❚❚");
-  video.addEventListener('pause', () => document.getElementById('play').innerText = "▶");
-  
-  video.ontimeupdate = () => {
-    document.getElementById('progressPlayed').style.width = (video.currentTime / video.duration) * 100 + '%';
-  };
-</script>
+    player.on('ready', () => {
+      const downloadBtn = document.querySelector('[data-plyr="download"]');
+      downloadBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = `download.html?url=${encodeURIComponent(player.media.currentSrc)}`;
+      });
+    });
+
+    player.on('enterfullscreen', async () => {
+      if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
+    });
+
+    player.on('exitfullscreen', () => {
+      if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+    });
+  </script>
+  <script src="/PW/player.js"></script>
 </body>
 </html>
