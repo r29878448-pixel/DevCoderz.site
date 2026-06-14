@@ -16,7 +16,6 @@
     </style>
 </head>
 <body class="pb-16">
-
     <div id="tabsContainer" class="flex gap-2 p-4 overflow-x-auto bg-white border-b border-gray-100 sticky top-0 z-10">
         <button onclick="loadContent('videos', this)" class="tab-btn active">Lectures</button>
         <button onclick="loadContent('notes', this)" class="tab-btn">Notes</button>
@@ -24,34 +23,27 @@
         <button onclick="loadContent('DppNotes', this)" class="tab-btn">DPP PDF</button>
         <button onclick="loadContent('dppVideos', this)" class="tab-btn">DPP Solution</button>
     </div>
-
     <div id="contentContainer" class="p-2">
         <div class="text-center mt-10 text-gray-500">Loading content...</div>
     </div>
-
     <footer class="text-center p-6 text-xs text-gray-400 font-medium">
         Developed by Devansh Sharma
     </footer>
-
     <script>
         const params = new URLSearchParams(window.location.search);
         const bId = params.get("batch_id");
         const sId = params.get("subject_id");
-        const tId = params.get("topic_id"); // Assuming this is topicSlug
+        const tId = params.get("topic_id");
 
         async function loadContent(tab, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             if(btn) btn.classList.add('active');
-
             const container = document.getElementById('contentContainer');
             container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
-
             try {
                 const res = await fetch(`https://mtaiirus-api.onrender.com/api/pw/datacontent?batchId=${bId}&subjectSlug=${sId}&topicSlug=${tId}&contentType=${tab}`);
                 const json = await res.json();
                 const decrypted = await decryptPayload(json.data);
-                
-                
                 render(decrypted.data || [], tab);
             } catch (e) {
                 container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data.</div>';
@@ -72,8 +64,6 @@
         function render(items, tab) {
             const container = document.getElementById('contentContainer');
             if(items.length === 0) { container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>'; return; }
-
-           
             container.innerHTML = items.map(i => `
                 <div class="lecture-card" onclick="handleClick('${tab}', ${JSON.stringify(i).replace(/"/g, '&quot;')})">
                     <div class="img-box">
@@ -89,9 +79,10 @@
         }
 
         function handleClick(tab, item) {
+            const targetSId = item.subjectSlug || sId;
+            const targetTId = item.topicSlug || tId;
             if (tab.includes('videos')) {
-                
-                const url = `./player.html?video_id=${item.video_id || item._id}&subject_slug=${sId}&batch_id=${bId}&schedule_id=${item.video_id || item._id}&subject_id=${sId}&topicSlug=${tId}`;
+                const url = `./player.html?video_id=${item.video_id || item._id}&subject_slug=${targetSId}&batch_id=${bId}&schedule_id=${item.video_id || item._id}&subject_id=${targetSId}&topicSlug=${targetTId}`;
                 window.location.href = url;
             } else {
                 alert("Opening content...");
