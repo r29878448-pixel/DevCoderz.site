@@ -80,19 +80,27 @@
         total.innerHTML += slice.map(card).join("");
         loaded += LIMIT; loading = false;
       }
+      function renderFav() {
+        let items = favs.map(id => cachedBatches[id]).filter(Boolean);
+        fav.innerHTML = items.length ? items.map(card).join("") : `<div class="empty">No favourites yet ❤️</div>`;
+      }
       content.onscroll = () => { if(total.style.display !== "none" && content.scrollTop + content.clientHeight >= content.scrollHeight - 50) loadMore(); };
       document.onclick = (e) => {
         if(e.target.classList.contains("favorite-btn")) {
             let id = e.target.closest(".batch").dataset.id;
-            if(favs.includes(id)) favs = favs.filter(f => f !== id); else favs.push(id);
+            let batch = ALL.find(b => (b._id || b.id || b.batchId) === id);
+            if(favs.includes(id)) { favs = favs.filter(f => f !== id); delete cachedBatches[id]; }
+            else { favs.push(id); if(batch) cachedBatches[id] = batch; }
             localStorage.setItem("favs", JSON.stringify(favs));
+            localStorage.setItem("fav_batches", JSON.stringify(cachedBatches));
             e.target.innerHTML = favs.includes(id) ? "❤️" : "♡";
             e.target.classList.toggle("favorited");
+            if(fav.style.display === "grid") renderFav();
         }
         if(e.target.classList.contains("explore-btn")) window.location.href = "batches.html?batch_id=" + e.target.dataset.id;
       };
       totalTab.onclick = () => { totalTab.classList.add("active"); favTab.classList.remove("active"); total.style.display = "grid"; fav.style.display = "none"; };
-      favTab.onclick = () => { favTab.classList.add("active"); totalTab.classList.remove("active"); total.style.display = "none"; fav.style.display = "grid"; fav.innerHTML = favs.map(id => card(cachedBatches[id] || {})).join(""); };
+      favTab.onclick = () => { favTab.classList.add("active"); totalTab.classList.remove("active"); total.style.display = "none"; fav.style.display = "grid"; renderFav(); };
       document.getElementById("searchInput").oninput = (e) => { filtered = ALL.filter(b => (b.name || "").toLowerCase().includes(e.target.value.toLowerCase())); loadMore(true); };
     </script>
 </body>
