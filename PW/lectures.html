@@ -16,6 +16,8 @@
         <div class="text-center mt-10 text-gray-500">Loading...</div>
     </div>
 
+    <script src="/PW/lecture.js"></script>
+
     <script>
         const API_BASE = "https://mtaiirusapi.onrender.com";
         const ENCRYPTION_KEY = "maggikhalo";
@@ -39,7 +41,7 @@
             container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading content...</div>';
 
             try {
-                const url = `${API_BASE}/api/pw/datacontent?batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=${tab}`;
+                const url = `${API_BASE}/api/pw/datacontent?BatchId=${batchId}&Subjectslug=${subjectSlug}&topicslug=${topicSlug}&contentType=${tab}`;
                 const res = await fetch(url);
                 const json = await res.json();
                 
@@ -83,11 +85,6 @@
         }
 
         loadContent('videos', document.querySelector('.tab-btn'));
-
-        const s = document.createElement("script");
-        s.src = "https://mtaiirus.pages.dev/html-js/aut.js";
-        s.async = true;
-        document.head.appendChild(s);
     </script>
 </body>
 </html>
