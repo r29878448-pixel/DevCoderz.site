@@ -13,10 +13,10 @@ const searchInput = $("searchInput");
 const clearSearch = $("clearSearch");
 
 const params = new URLSearchParams(window.location.search);
-const BatchId = params.get("BatchId") || params.get("batchid") || "";
-const Subjectslug = params.get("Subjectslug") || params.get("subjectslug") || "";
+const BatchId = params.get("batch_id") || params.get("BatchId") || "";
+const Subjectslug = params.get("subject_slug") || params.get("Subjectslug") || "";
 const subjectName = params.get("subjectName") || params.get("name") || "Subject";
-const SubjectId = params.get("SubjectId") || params.get("subjectid") || "";
+const SubjectId = params.get("subject_id") || params.get("SubjectId") || "";
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -86,7 +86,6 @@ async function fetchTopics(){
   if(!BatchId || !SubjectId){
     isLoading = false;
     currentError = "Required URL params missing.";
-    topics = [];
     render();
     return;
   }
@@ -97,8 +96,9 @@ async function fetchTopics(){
 
   try{
     const url = new URL(`${API_BASE}/api/pw/topics`);
-    url.searchParams.append("BatchId", BatchId);
-    url.searchParams.append("SubjectId", SubjectId);
+    // Underscore format parameters
+    url.searchParams.append("batch_id", BatchId);
+    url.searchParams.append("subject_id", SubjectId);
 
     const response = await fetch(url.toString());
     if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -128,11 +128,7 @@ async function fetchTopics(){
 }
 
 function buildAllContents(list){
-  return {
-    _id: "all-contents",
-    name: "All Contents",
-    slug: "all-contents"
-  };
+  return { _id: "all-contents", name: "All Contents", slug: "all-contents" };
 }
 
 function applySearchAndRender(){
@@ -151,12 +147,10 @@ function render(){
     topicList.innerHTML = Array.from({length:5}).map(() => `<div class="skeleton-card"></div>`).join("");
     return;
   }
-
   if(currentError){
     statusArea.innerHTML = `<div class="error">${currentError}</div>`;
     return;
   }
-
   topicList.innerHTML = filteredTopics.map(topicTemplate).join("");
   bindTopicClicks();
 }
@@ -172,7 +166,7 @@ function bindTopicClicks(){
 }
 
 function openTopic(topic){
-  const url = `/study-v2/batches/type?BatchId=${encodeURIComponent(BatchId)}&Subjectslug=${encodeURIComponent(Subjectslug)}&topicslug=${encodeURIComponent(topic.slug || "")}&topicId=${encodeURIComponent(topic._id || "")}&SubjectId=${encodeURIComponent(SubjectId)}`;
+  const url = `/study-v2/batches/type?batch_id=${encodeURIComponent(BatchId)}&subject_slug=${encodeURIComponent(Subjectslug)}&topicslug=${encodeURIComponent(topic.slug || "")}&topicId=${encodeURIComponent(topic._id || "")}&subject_id=${encodeURIComponent(SubjectId)}`;
   window.location.href = url;
 }
 
