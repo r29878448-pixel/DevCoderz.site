@@ -16,16 +16,14 @@
         <div class="text-center mt-10 text-gray-500">Loading...</div>
     </div>
 
-    <script src="/PW/lecture.js"></script>
-
     <script>
         const API_BASE = "https://mtaiirusapi.onrender.com";
         const ENCRYPTION_KEY = "maggikhalo";
 
         const params = new URLSearchParams(window.location.search);
-        const batchId = params.get("BatchId");
-        const subjectSlug = params.get("Subjectslug");
-        const topicSlug = params.get("topicslug");
+        const batch_id = params.get("batch_id") || params.get("BatchId");
+        const subject_id = params.get("subject_id") || params.get("SubjectId");
+        const topic_id = params.get("topic_id") || params.get("topicslug");
 
         async function loadContent(tab, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => {
@@ -41,7 +39,8 @@
             container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading content...</div>';
 
             try {
-                const url = `${API_BASE}/api/pw/datacontent?BatchId=${batchId}&Subjectslug=${subjectSlug}&topicslug=${topicSlug}&contentType=${tab}`;
+                // Underscore format URL
+                const url = `${API_BASE}/api/pw/datacontent?batch_id=${batch_id}&subject_id=${subject_id}&topic_id=${topic_id}&contentType=${tab}`;
                 const res = await fetch(url);
                 const json = await res.json();
                 
