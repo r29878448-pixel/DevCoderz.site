@@ -551,27 +551,7 @@
   </div>
 
   <script>
-    // ══════════════════ SECURITY LAYER ══════════════════
-    (function() {
-      'use strict';
-      var REDIRECT = 'kehamhai.html';
-      var _dtFired = false;
-      var _threshold = 160;
-      function _redirect() { if (_dtFired) return; _dtFired = true; window.location.replace(REDIRECT); }
-      function _checkSize() { var w = window.outerWidth - window.innerWidth; var h = window.outerHeight - window.innerHeight; if (w > _threshold || h > _threshold) _redirect(); }
-      setInterval(_checkSize, 600);
-      setInterval(function() { (function() { var t = new Date(); debugger; if (new Date() - t > 100) _redirect(); })(); }, 3000);
-      document.addEventListener('contextmenu', function(e) { e.preventDefault(); e.stopPropagation(); return false; }, true);
-      ['selectstart','dragstart','copy','cut'].forEach(function(ev) { document.addEventListener(ev, function(e) { e.preventDefault(); return false; }); });
-      document.addEventListener('keydown', function(e) { var k = e.key || ''; if (e.keyCode === 123 || k === 'F12') { e.preventDefault(); e.stopPropagation(); return false; } if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I','J','C','i','j','c'].includes(k)) { e.preventDefault(); e.stopPropagation(); return false; } if ((e.ctrlKey || e.metaKey) && ['u','U','s','S','p','P','a','A'].includes(k)) { e.preventDefault(); e.stopPropagation(); return false; } }, true);
-      window.addEventListener('beforeprint', function(e) { e.stopImmediatePropagation(); window.print = function() { return false; }; }, true);
-      try { var _n = function() {}; ['log','warn','error','info','debug','table','dir','dirxml','trace','group','groupCollapsed','groupEnd','time','timeEnd','profile','profileEnd','count','clear'].forEach(function(m) { if (console[m]) console[m] = _n; }); } catch(_) {}
-      document.documentElement.style.setProperty('-webkit-user-select','none');
-      document.documentElement.style.setProperty('-moz-user-select','none');
-      document.documentElement.style.setProperty('-ms-user-select','none');
-      document.documentElement.style.setProperty('user-select','none');
-    })();
-  </script>
+ 
 
   <script src="https://devcoderz-pw.vercel app/PW/lecture.js"></script>
 
