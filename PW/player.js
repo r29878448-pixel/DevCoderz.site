@@ -1,13 +1,13 @@
 
 
 const CONFIG = {
-  BASE_API: "https://apiserver.deltastudy.site",
+  BASE_API: "https://mtaiirusapi.onrender.com",
 
   REQUIRE_DELTA_KEY: false,
   DELTA_ACCESS_KEY: "delta-access-key",
   DELTA_KEY_EXPIRATION: "delta-key-expiration",
 
-  LOGO: "https://i.ibb.co/9Hm0NqsH/f69ed82b-7169-45fc-a82b-915e453c6340.png"
+  LOGO: "https://devcoderz.vercel.app/pw.png"
 };
 
 const $ = (id) => document.getElementById(id);
