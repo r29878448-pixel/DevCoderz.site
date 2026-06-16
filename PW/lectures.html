@@ -17,13 +17,13 @@
     </div>
 
     <script>
-        const API_BASE = "https://mtaiirusapi.onrender.com";
+        const API_BASE = "https://apiserver.deltastudy.site";
         const ENCRYPTION_KEY = "maggikhalo";
 
         const params = new URLSearchParams(window.location.search);
-        const batch_id = params.get("batch_id") || params.get("BatchId");
-        const subject_id = params.get("subject_id") || params.get("SubjectId");
-        const topic_id = params.get("topic_id") || params.get("topicslug");
+        const batchId = params.get("batchId") || params.get("BatchId");
+        const subjectSlug = params.get("subjectSlug") || params.get("Subjectslug");
+        const topicSlug = params.get("topicSlug") || params.get("topicslug");
 
         async function loadContent(tab, btn) {
             document.querySelectorAll('.tab-btn').forEach(b => {
@@ -39,8 +39,7 @@
             container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading content...</div>';
 
             try {
-                // Underscore format URL
-                const url = `${API_BASE}/api/pw/datacontent?batch_id=${batch_id}&subject_id=${subject_id}&topic_id=${topic_id}&contentType=${tab}`;
+                const url = `${API_BASE}/api/pw/datacontent?batchId=${batchId}&subjectSlug=${subjectSlug}&topicSlug=${topicSlug}&contentType=${tab}`;
                 const res = await fetch(url);
                 const json = await res.json();
                 
@@ -53,6 +52,7 @@
 
         async function decryptPayload(payload) {
             try {
+                if(!payload) return {data: []};
                 const [ivHex, encryptedHex] = payload.split(":");
                 const iv = new Uint8Array(ivHex.match(/.{1,2}/g).map(x => parseInt(x, 16)));
                 const encrypted = new Uint8Array(encryptedHex.match(/.{1,2}/g).map(x => parseInt(x, 16)));
@@ -71,7 +71,7 @@
 
         function render(items) {
             const container = document.getElementById('contentContainer');
-            if(items.length === 0) {
+            if(!items || items.length === 0) {
                 container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>';
                 return;
             }
