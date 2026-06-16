@@ -65,7 +65,7 @@
         }
 
         function openLectures(tSlug, tName, tId) {
-            window.location.href = `./lectures.html/${bId}/${sSlug}/${tSlug}?topicName=${tName}&topicId=${tId}&subjectId=${sId}`;
+            window.location.href = `./lectures.html?${bId}&${sSlug}&${tSlug}?topicName=${tName}&topicId=${tId}&subjectId=${sId}`;
         }
 
         if (bId && sId) loadChapters();
