@@ -1,4 +1,4 @@
-const API_BASE = "https://mtaiirusapi.onrender.com";
+const API_BASE = "https://apiserver.deltastudy.site";
 const ENCRYPTION_KEY = "maggikhalo";
 
 let topics = [];
