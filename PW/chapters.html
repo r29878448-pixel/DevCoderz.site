@@ -37,38 +37,48 @@
         const params = new URLSearchParams(window.location.search);
         const bId = params.get('batch_id');
         const sId = params.get('subject_id');
-        const sSlug = params.get('subject_slug') || "subject-slug";
+        const sSlug = params.get('subject_slug') || params.get('subject_id');
 
-        if (!bId || !sId) { window.location.href = "./index.html"; }
+        if (!bId || !sId) { 
+            window.location.href = "./index.html"; 
+            return;
+        }
 
         document.getElementById('backBtn').onclick = () => { window.history.back(); };
 
         async function loadChapters() {
             const container = document.getElementById('chaptersContainer');
-            const targetApi = `/api/PW/all-batches-api3?batch_id=${encodeURIComponent(bId)}&subject_id=${encodeURIComponent(sId)}`;
+            const targetApi = `/api/PW/all-batches-api3?batch_id=\( {encodeURIComponent(bId)}&subject_id= \){encodeURIComponent(sId)}`;
 
             try {
                 const res = await fetch(targetApi);
                 const resData = await res.json();
-                let chapters = resData.topics || [];
+                let chapters = resData.topics || resData.data || [];
+
+                if (chapters.length === 0) {
+                    container.innerHTML = `<div class="text-center text-gray-500 py-12">No chapters found</div>`;
+                    return;
+                }
 
                 container.innerHTML = chapters.map(c => `
                     <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-between" 
-                         onclick="openLectures('${c.slug}', '${encodeURIComponent(c.name)}', '${c.topicId || c._id}')">
+                         onclick="openLectures('\( {c.slug || c.topicSlug}', ' \){encodeURIComponent(c.name)}', '${c.topicId || c._id}')">
                         <span class="text-sm font-bold text-slate-700 truncate">${c.name}</span>
                         <div class="text-indigo-500 font-bold">→</div>
                     </div>
                 `).join('');
             } catch (e) {
-                container.innerHTML = `<div class="text-center text-red-500 py-12 text-sm">Error connecting.</div>`;
+                console.error(e);
+                container.innerHTML = `<div class="text-center text-red-500 py-12 text-sm">Error connecting to server.<br><small>Please check console</small></div>`;
             }
         }
 
         function openLectures(tSlug, tName, tId) {
-            window.location.href = `./lectures.html?${bId}&${sSlug}&${tSlug}?topicName=${tName}&topicId=${tId}&subjectId=${sId}`;
+            const url = `./lectures.html?batch_id=\( {encodeURIComponent(bId)}&subject_id= \){encodeURIComponent(sId)}&topic_id=\( {encodeURIComponent(tId)}&subject_slug= \){encodeURIComponent(sSlug)}&topic_slug=\( {encodeURIComponent(tSlug)}&topicName= \){tName}`;
+            window.location.href = url;
         }
 
-        if (bId && sId) loadChapters();
+        loadChapters();
     </script>
 </body>
 </html>
