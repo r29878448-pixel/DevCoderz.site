@@ -45,7 +45,7 @@
             container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
             try {
                 // Ab ye sirf basic params use karega jaisa aapne bataya
-                const url = `https://streamworld.vercel.app/api/proxy/batch/${bId}/subject/${sId}/contents?page=1&contentType=${tab}`;
+                const url = `https://streamworld.vercel.app/api/proxy/batch/${bId}/subject/${sId}/contents?&contentType=${tab}`;
                 const res = await fetch(url);
                 const json = await res.json();
                 if (json.html) {
