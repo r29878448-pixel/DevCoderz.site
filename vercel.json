@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/PW/lectures/:bid/:sid/:tab",
+      "destination": "/index.html?bid=:bid&sid=:sid&tab=:tab"
+    }
+  ]
+}
