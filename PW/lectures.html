@@ -10,7 +10,7 @@
         .notes-icon { font-size: 1.5rem; }
         .notes-topic { font-weight: bold; color: #1f2937; font-size: 0.9rem; }
         .notes-time { font-size: 0.7rem; color: #9ca3af; margin-top: 0.25rem; }
-        .notes-view-btn { background: #4f46e5; color: white; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 0.4rem; }
+        .notes-view-btn { background: #4f46e5; color: white; padding: 0.4rem 0.8rem; border-radius: 0.5rem; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
         .cont-badge { background: #eef2ff; color: #4f46e5; padding: 0.1rem 0.4rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 800; }
     </style>
 </head>
@@ -29,9 +29,7 @@
     </div>
     <script>
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) || (e.ctrlKey && e.key === 'U')) {
-                e.preventDefault();
-            }
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'C' || e.key === 'J')) || (e.ctrlKey && e.key === 'U')) { e.preventDefault(); }
         });
         const params = new URLSearchParams(window.location.search);
         const bId = params.get("batchId");
@@ -39,34 +37,27 @@
         const sSlug = params.get("subjectSlug");
         const chapterSlug = params.get("chapterSlug");
         async function loadContent(tab, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.remove('bg-indigo-600', 'text-white');
-                b.classList.add('bg-white', 'border');
-            });
-            if(btn) {
-                btn.classList.add('bg-indigo-600', 'text-white');
-                btn.classList.remove('bg-white', 'border');
-            }
+            document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('bg-indigo-600', 'text-white'); b.classList.add('bg-white', 'border'); });
+            if(btn) { btn.classList.add('bg-indigo-600', 'text-white'); btn.classList.remove('bg-white', 'border'); }
             const container = document.getElementById('contentContainer');
             container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
             try {
                 const url = `https://streamworld.vercel.app/api/proxy/batch/${bId}/subject/${sId}/contents?page=1&contentType=${tab}&tag=${chapterSlug}&subslug=${sSlug}`;
                 const res = await fetch(url);
                 const json = await res.json();
-                if (json.html) {
+                console.log("API Response Debug:", json);
+                if (json.html && json.html.length > 20) {
                     container.innerHTML = json.html;
-                } else if (json.data) {
+                } else if (json.data && json.data.length > 0) {
                     container.innerHTML = json.data.map(i => `<div class="bg-white p-4 mb-3 rounded-xl shadow-sm border border-gray-100"><p class="font-bold text-gray-800">${i.name || i.topicName || "Untitled"}</p></div>`).join('');
                 } else {
-                    container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>';
+                    container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found for this category.</p>';
                 }
             } catch (e) {
-                container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data.</div>';
+                container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data. Check console.</div>';
             }
         }
-        window.__viewNote = function(el) {
-            alert("Redirecting to viewer...");
-        };
+        window.__viewNote = function(el) { alert("Action Triggered"); };
         loadContent('videos', document.querySelector('.tab-btn'));
     </script>
 </body>
