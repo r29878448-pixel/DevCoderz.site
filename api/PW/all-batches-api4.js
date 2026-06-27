@@ -1,33 +1,26 @@
-async function fetchContent(bId, sId, tId, tab, callback) {
-    const targetUrl = `https://edunova-pw.site/api/get-lectures.php?batch_id=${bId}&subject_id=${sId}&topic_id=${tId}&tab=${tab}`;
-    
-    // Proxy list: Agar ek fail hoti hai, toh dusri try hogi
-    const proxies = [
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-        `https://thingproxy.freeboard.io/fetch/${targetUrl}`
-    ];
+const crypto = require('crypto');
 
-    async function attemptFetch(index) {
-        if (index >= proxies.length) {
-            document.getElementById("loadingScreen").innerText = "All proxies failed. API is restricted.";
-            return;
-        }
+const KEY = crypto.createHash('sha256').update("hellobhai").digest();
 
-        try {
-            const response = await fetch(proxies[index], {
-                headers: { 'Accept': 'application/json' }
-            });
+export default async function handler(req, res) {
+    const { batchId, subjectId, contentType, tag } = req.query;
+    const targetUrl = `https://type-proxy.vercel.app/?batchId=${batchId}&subjectId=${subjectId}&contentType=${contentType}&tag=${tag}`;
 
-            if (!response.ok) throw new Error("Proxy Blocked");
+    try {
+        const response = await fetch(targetUrl);
+        const data = await response.json();
 
-            const data = await response.json();
-            callback(data);
-        } catch (error) {
-            console.warn(`Proxy ${index} failed, trying next...`);
-            attemptFetch(index + 1);
-        }
+        const iv = crypto.randomBytes(16);
+        const cipher = crypto.createCipheriv('aes-256-cbc', KEY, iv);
+        
+        let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
+        encrypted += cipher.final('hex');
+
+        res.status(200).json({
+            iv: iv.toString('hex'),
+            encryptedData: encrypted
+        });
+    } catch (e) {
+        res.status(500).json({ error: "Failed", details: e.message });
     }
-
-    attemptFetch(0);
 }
