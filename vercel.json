@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/PW/lectures/:bid/:sid/:tab",
-      "destination": "/index.html?bid=:bid&sid=:sid&tab=:tab"
+      "source": "/api/(.*)",
+      "destination": "/api/$1.js"
     }
   ]
 }
