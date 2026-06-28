@@ -21,14 +21,12 @@
         <button onclick="loadContent('notes', this)" class="tab-btn bg-white border">Notes</button>
         <button onclick="loadContent('DppNotes', this)" class="tab-btn bg-white border">DPP</button>
     </div>
-    <div id="contentContainer" class="p-4">
-        <div class="text-center mt-10 text-gray-500">Loading...</div>
-    </div>
+    <div id="contentContainer" class="p-4"></div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
-        const bId = params.get("batchId");
-        const sId = params.get("subjectId");
+        const bId = params.get("batchId") || params.get("batch_id");
+        const sId = params.get("subjectId") || params.get("subject_id");
         const tag = params.get("tag") ? `&tag=${params.get("tag")}` : "";
 
         async function loadContent(tab, btn) {
@@ -42,7 +40,7 @@
             }
 
             const container = document.getElementById('contentContainer');
-            container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading...</div>';
+            container.innerHTML = '<div class="text-center mt-10 text-gray-500">Loading lectures...</div>';
 
             try {
                 const u = `https://devcoderz-pw.vercel.app/api/PW/all-batches-api4.js?batchId=\( {bId}&subjectId= \){sId}&contentType=\( {tab} \){tag}`;
@@ -51,21 +49,21 @@
 
                 if (json.data && json.data.length > 0) {
                     container.innerHTML = json.data.map(i => `
-                        <div onclick="playVideo('\( {i._id || i.videoDetails?._id}', ' \){encodeURIComponent(i.topic || i.videoDetails?.name || 'Lecture')}')" 
+                        <div onclick="playVideo('\( {i._id || (i.videoDetails && i.videoDetails._id) || ''}', ' \){encodeURIComponent(i.topic || (i.videoDetails && i.videoDetails.name) || 'Lecture')}')" 
                              class="bg-white p-4 mb-3 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4 cursor-pointer hover:bg-gray-50">
                             \( {i.videoDetails?.image ? `<img src=" \){i.videoDetails.image}" class="w-16 h-12 rounded-lg object-cover">` : ''}
                             <div class="flex-1">
-                                <p class="font-bold text-gray-800">${i.topic || i.videoDetails?.name || "Untitled"}</p>
-                                \( {i.videoDetails?.duration ? `<p class="text-xs text-gray-500 mt-1"> \){Math.floor(i.videoDetails.duration/60)}:${(i.videoDetails.duration%60).toString().padStart(2,'0')}</p>` : ''}
+                                <p class="font-bold text-gray-800">${i.topic || (i.videoDetails && i.videoDetails.name) || "Untitled"}</p>
                             </div>
                             <div class="text-indigo-500 text-2xl">▶</div>
                         </div>
                     `).join('');
                 } else {
-                    container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>';
+                    container.innerHTML = '<p class="text-center mt-10 text-gray-400">No lectures found</p>';
                 }
             } catch (e) {
-                container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data.</div>';
+                container.innerHTML = '<div class="text-center mt-10 text-red-500">Error loading data. Check console.</div>';
+                console.error(e);
             }
         }
 
@@ -74,10 +72,11 @@
                 alert("Video ID not found!");
                 return;
             }
-            const url = `./player.html?batch_id=\( {bId}&subject_id= \){sId}&video_id=\( {videoId}&title= \){title}`;
+            const url = `./play.html?batch_id=\( {bId}&subject_id= \){sId}&video_id=\( {videoId}&title= \){title}`;
             window.location.href = url;
         }
 
+        // Auto load lectures
         loadContent('videos', document.querySelector('.tab-btn'));
     </script>
 </body>
