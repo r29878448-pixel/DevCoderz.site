@@ -42,11 +42,9 @@
             try {
                 const u = `https://type-proxy.vercel.app/?batchId=${bId}&subjectId=${sId}&contentType=${tab}`;
                 const res = await fetch(u);
-                const data = await res.json();
-                if (data.html) {
-                    container.innerHTML = data.html;
-                } else if (data.data) {
-                    container.innerHTML = data.data.map(i => `<div class="bg-white p-4 mb-3 rounded-xl shadow-sm border border-gray-100"><p class="font-bold text-gray-800">${i.name || i.topicName || "Untitled"}</p></div>`).join('');
+                const json = await res.json();
+                if (json.data && json.data.length > 0) {
+                    container.innerHTML = json.data.map(i => `<div class="bg-white p-4 mb-3 rounded-xl shadow-sm border border-gray-100"><p class="font-bold text-gray-800">${i.topic || i.videoDetails?.name || "Untitled"}</p></div>`).join('');
                 } else {
                     container.innerHTML = '<p class="text-center mt-10 text-gray-400">No content found</p>';
                 }
