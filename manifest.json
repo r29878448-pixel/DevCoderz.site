@@ -1,18 +1,18 @@
 {
-  "name": "The DevCoderZ Player",
-  "short_name": "DevCoderZ",
+  "name": "The Study Portal",
+  "short_name": "Study Portal",
   "start_url": "/PW/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",
   "icons": [
     {
-      "src": "https://devcoderz.vercel.app/pw.png",
+      "src": "https://i.ibb.co/N6FpxGmC/IMG-20260713-102046-864.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://devcoderz.vercel.app/pw.png",
+      "src": "https://i.ibb.co/N6FpxGmC/IMG-20260713-102046-864.png",
       "sizes": "512x512",
       "type": "image/png"
     }
